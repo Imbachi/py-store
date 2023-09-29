@@ -1,6 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from .models import *
+from .forms import OrderForm, CustomerForm
+from .filters import OrderFilter
 
 
 # Create your views here.
@@ -25,5 +27,32 @@ def products(request):
 def customers(request, pk):
     customer = Customer.objects.get(id=pk)
     orders = customer.order_set.all()
-    context = {'customer': customer, 'orders': orders}
+    total_orders = orders.count()
+    myFilter = OrderFilter(request.GET, queryset=orders)
+    orders = myFilter.qs
+    context = {'customer': customer, 'orders': orders, 'total_orders': total_orders, 'myFilter': myFilter}
     return render(request, 'accounts/customers.html', context)
+
+
+def createOrder(request):
+    form = OrderForm
+    if request.method == 'POST':
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('/')
+
+    context = {'form': form}
+    return render(request, 'accounts./order_form.html', context)
+
+
+def createCustomer(request):
+    form = CustomerForm
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('/')
+
+    context = {'form': form}
+    return render(request, 'accounts./customer_form.html', context)
